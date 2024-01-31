@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "ostream": "cpp",
+        "iostream": "cpp",
+        "bitset": "cpp",
+        "chrono": "cpp",
+        "algorithm": "cpp",
+        "*.cgt": "cpp",
+        "ApplicationSet_*.properties": "xml",
+        "string": "cpp"
+    }
+}
