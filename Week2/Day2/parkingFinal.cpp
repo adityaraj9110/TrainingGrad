@@ -1,15 +1,17 @@
-#include<bits/stdc++.h>
+#include <bits/stdc++.h>
 
 using namespace std;
 
 // Enum for PaymentType
-enum class PaymentType {
+enum class PaymentType
+{
     CASH,
     CREDIT_CARD,
 };
 
 // Enum for ParkingSpaceType
-enum class ParkingSpaceType {
+enum class ParkingSpaceType
+{
     BIKE_PARKING,
     CAR_PARKING,
     TRUCK_PARKING,
@@ -17,7 +19,8 @@ enum class ParkingSpaceType {
 };
 
 // Enum for VehicleType
-enum class VehicleType {
+enum class VehicleType
+{
     BIKE,
     CAR,
     TRUCK,
@@ -25,32 +28,37 @@ enum class VehicleType {
 };
 
 // Enum for ParkingTicketStatus
-enum class ParkingTicketStatus {
+enum class ParkingTicketStatus
+{
     PAID,
     ACTIVE
 };
 
 // Enum for PaymentStatus
-enum class PaymentStatus {
+enum class PaymentStatus
+{
     UNPAID,
     PENDING,
     COMPLETED,
 };
 
-// Forward declaration to avoid any conflict
+// Forward declaration to avoid any errors
 class ParkingLot;
 class Account;
-class Account {
+// class ParkingLot;
+// class Account;
+class ParkingTicket;
+class PaymentMode;
+class Account
+{
 
-	string name;
-	string email;
-	string password;
-	string empId;
-	Address address;
-
+    string name;
+    string password;
+    string empId;
 };
 // Class Address
-class Address {
+class Address
+{
 public:
     string country;
     string state;
@@ -58,7 +66,8 @@ public:
 };
 
 // Class PaymentInfo
-class PaymentInfo {
+class PaymentInfo
+{
 public:
     double amount;
     time_t paymentDate;
@@ -68,14 +77,23 @@ public:
 };
 
 // Class Payment
-class Payment {
+class Payment
+{
 public:
     // construcctor to make payments
-    PaymentInfo makePayment(ParkingTicket *parkingTicket, PaymentType paymentType){};
+    PaymentInfo makePayment(ParkingTicket *parkingTicket, PaymentType paymentType)
+    {
+        PaymentMode paymentMode;
+        PaymentInfo paymentInfo = paymentMode.makePayment(parkingTicket, paymentType);
+        parkingTicket->parkingTicketStatus = ParkingTicketStatus::PAID;
+        parkingTicket->updateTotalCost();
+        return paymentInfo;
+    };
 };
 
 // Class Vehicle
-class Vehicle {
+class Vehicle
+{
 public:
     string licenseNumber;
     VehicleType vehicleType;
@@ -84,7 +102,8 @@ public:
 };
 
 // Class ParkingTicket
-class ParkingTicket {
+class ParkingTicket
+{
 public:
     int ticketId;
     int levelId;
@@ -96,43 +115,57 @@ public:
     double totalCost;
     ParkingTicketStatus parkingTicketStatus;
     // these are the funtion which is used to update the total cost and exit time of vehicle
-    void updateTotalCost(){};
-    void updateVehicleExitTime(time_t vehicleExitDateTime){
+    void updateTotalCost()
+    {
+        // we convert the seconds in hours by diving 3600 and perhour price is 4 so multiply with 4 
+        totalCost = (difftime(vehicleExitDateTime, vehicleEntryDateTime) / 3600) * 4;
+    };
+    void updateVehicleExitTime(time_t vehicleExitDateTime)
+    {
         this->vehicleExitDateTime = vehicleExitDateTime;
-
     };
 };
 
-// Class PaymentService
-class PaymentService {
+// Class PaymentMode
+class PaymentMode
+{
 public:
-    PaymentInfo makePayment(ParkingTicket *parkingTicket, PaymentType paymentType){
+    PaymentInfo makePayment(ParkingTicket *parkingTicket, PaymentType paymentType)
+    {
         PaymentInfo paymentInfo;
         paymentInfo.amount = parkingTicket->totalCost; // the payment amount is the total cost
-        paymentInfo.paymentDate = time(nullptr); // payment date is current date/time
-        paymentInfo.transactionId = generateTransactionId(); 
+        paymentInfo.paymentDate = time(nullptr);       // payment date is current date/time
+        paymentInfo.transactionId = generateTransactionId();
         paymentInfo.parkingTicket = parkingTicket;
         paymentInfo.paymentStatus = PaymentStatus::COMPLETED; // payment is completed
         return paymentInfo;
     };
-    private:
-        int generateTransactionId() {
+
+private:
+    int generateTransactionId()
+    {
         // Generate a unique transaction ID
-            static int transactionId = 0;
-            return ++transactionId;
+        static int transactionId = 0;
+        return transactionId++;
     }
 };
 
 // Class ParkingDisplayBoard
-class ParkingDisplayBoard {
+class ParkingDisplayBoard
+{
 public:
-    map<ParkingSpaceType, int> freeSpotsAvailableMap;
+    unordered_map<ParkingSpaceType, int> freeSpotsAvailableMap;
 
-    void updateFreeSpotsAvailable(ParkingSpaceType parkingSpaceType, int spaces){};
+    void updateFreeSpotsAvailable(ParkingSpaceType parkingSpaceType, int spaces)
+    {
+        // if free spots available store it in map with its type
+        freeSpotsAvailableMap[parkingSpaceType] += spaces;
+    };
 };
 
 // Class ParkingSpace
-class ParkingSpace {
+class ParkingSpace
+{
 public:
     int spaceId;
     bool isFree;
@@ -142,35 +175,43 @@ public:
 };
 
 // Class Gate
-class Gate {
+class Gate
+{
 public:
     int gateId;
+    // since each gate has parking attendants
     ParkingAttendant *parkingAttendant;
 };
 
 // Class Entrance
-class Entrance : public Gate {
+class Entrance : public Gate
+{
 
 public:
-    ParkingTicket *getParkingTicket(Vehicle *vehicle){
+    ParkingTicket *getParkingTicket(Vehicle *vehicle)
+    {
         ParkingTicket *parkingTicket = new ParkingTicket();
-        parkingTicket->ticketId = generateTicketId(); // Function to generate ticket ID
+        parkingTicket->ticketId = generateTicketId();        // Function to generate ticket ID
         parkingTicket->vehicleEntryDateTime = time(nullptr); // Set entry time to current time
 
         return parkingTicket;
     };
+
 private:
-    int generateTicketId() {
+    int generateTicketId()
+    {
         // Generate a unique transaction ID
-            static int transactionId = 0;
-            return ++transactionId;
+        static int transactionId = 0;
+        return transactionId++;
     }
 };
 
 // Class Exit
-class Exit : public Gate {
+class Exit : public Gate
+{
 public:
-    ParkingTicket *payForParking(ParkingTicket *parkingTicket, PaymentType paymentType){
+    ParkingTicket *payForParking(ParkingTicket *parkingTicket, PaymentType paymentType)
+    {
         Payment payment;
         PaymentInfo paymentInfo = payment.makePayment(parkingTicket, paymentType);
         // Update parking ticket status and other relevant details
@@ -182,7 +223,8 @@ public:
 };
 
 // Class ParkingFloor
-class ParkingFloor {
+class ParkingFloor
+{
 public:
     int levelId;
     vector<ParkingSpace *> parkingSpaces;
@@ -190,41 +232,52 @@ public:
 };
 
 // Class ParkingAttendant
-class ParkingAttendant : public Account {
+class ParkingAttendant : public Account
+{
 public:
-    PaymentService *paymentService;
+    PaymentMode *paymentMode;
     // this funtion is used to process the entry of vehicle
-    bool processVehicleEntry(Vehicle *vehicle){};
-    PaymentInfo *processPayment(ParkingTicket *parkingTicket, PaymentType paymentType){
-         PaymentService paymentService;
-        return &paymentService.makePayment(parkingTicket, paymentType);
+    bool processVehicleEntry(Vehicle *vehicle){
+
+    };
+    PaymentInfo *processPayment(ParkingTicket *parkingTicket, PaymentType paymentType)
+    {
+        PaymentMode paymentMode;
+        return &paymentMode.makePayment(parkingTicket, paymentType);
     };
 };
 
 // Class Admin
-class Admin : public Account {
+class Admin : public Account
+{
 public:
-    bool addParkingFloor(ParkingLot *parkingLot, ParkingFloor *floor) {
+    bool addParkingFloor(ParkingLot *parkingLot, ParkingFloor *floor)
+    {
         // adding a parking floor to the parking lot
-        if (parkingLot != nullptr && floor != nullptr) {
+        if (parkingLot != nullptr && floor != nullptr)
+        {
             parkingLot->parkingFloors.push_back(floor);
             return true;
         }
         return false;
     }
 
-    bool addParkingSpace(ParkingFloor *floor, ParkingSpace *parkingSpace) {
+    bool addParkingSpace(ParkingFloor *floor, ParkingSpace *parkingSpace)
+    {
         // adding a parking space to a parking floor
-        if (floor != nullptr && parkingSpace != nullptr) {
+        if (floor != nullptr && parkingSpace != nullptr)
+        {
             floor->parkingSpaces.push_back(parkingSpace);
             return true;
         }
         return false;
     }
 
-    bool addParkingDisplayBoard(ParkingFloor *floor, ParkingDisplayBoard *parkingDisplayBoard) {
+    bool addParkingDisplayBoard(ParkingFloor *floor, ParkingDisplayBoard *parkingDisplayBoard)
+    {
         // adding a parking display board to a parking floor
-        if (floor != nullptr && parkingDisplayBoard != nullptr) {
+        if (floor != nullptr && parkingDisplayBoard != nullptr)
+        {
             floor->parkingDisplayBoard = *parkingDisplayBoard;
             return true;
         }
@@ -233,8 +286,9 @@ public:
 };
 
 // Class ParkingLot
-class ParkingLot {
-    public:
+class ParkingLot
+{
+public:
     // since pakring lot has multiple floors
     vector<ParkingFloor *> parkingFloors;
     vector<Entrance *> entrances;
@@ -243,10 +297,43 @@ class ParkingLot {
     Address address;
     string parkingLotName;
 
-    bool isParkingSpaceAvailableForVehicle(Vehicle *vehicle){};
-    bool updateParkingAttendant(ParkingAttendant *parkingAttendant, int gateId){};
+    bool isParkingSpaceAvailableForVehicle(Vehicle *vehicle)
+    {
+        for (auto floor : parkingFloors)
+        {
+            for (auto parkingSpace : floor->parkingSpaces)
+            {
+                if (parkingSpace->isFree)
+                {
+                    return true; // Parking space available
+                }
+            }
+        }
+        return false; // No parking space available
+    };
+    bool updateParkingAttendant(ParkingAttendant *parkingAttendant, int gateId)
+    {
+        for (auto entrance : entrances)
+        {
+            if (entrance->gateId == gateId)
+            {
+                entrance->parkingAttendant = parkingAttendant;
+                return true; // Attendant updated successfully
+            }
+        }
+        for (auto exit : exits)
+        {
+            if (exit->gateId == gateId)
+            {
+                exit->parkingAttendant = parkingAttendant;
+                return true; // Attendant updated successfully
+            }
+        }
+        return false; // Gate ID not found
+    };
 };
 
-int main() {
+int main()
+{
     return 0;
 }
