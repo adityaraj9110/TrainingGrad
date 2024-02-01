@@ -1,0 +1,431 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+
+/******************** Desgin has 3 main actors LMS Book Management and User management .there is middleware to insure the communiction betwwen these two independent classes.All the funtionality .*************************************************/
+
+
+// Forward declaration
+class BookManagement;
+
+// Notification system class for sending notifications to users
+class NotificationSystem
+{
+public:
+    void sendNotification(const string &recipient, const string &message)
+    {
+        cout << "Sending notification to " << recipient << ": " << message << endl;
+    }
+};
+
+// Book class representing a book in the library
+class Book
+{
+private:
+    int id;
+    string title;
+    string author;
+    string genre;
+    time_t publicationDate;
+    bool available;
+
+public:
+    // constructor
+    Book(int id, const string &title, const string &author, const string &genre)
+        : id(id), title(title), author(author), genre(genre), publicationDate(time(nullptr)), available(true) {}
+    // getters funtiuon
+    int getId() const { return id; }
+    string getTitle() { return title; }
+    string getAuthor() { return author; }
+    string getGenre() { return genre; }
+    time_t getPublicationDate() { return publicationDate; }
+    bool isAvailable() { return available; }
+    // used to set availability
+    void setAvailability(bool status) { available = status; }
+};
+
+// Middleware class for communication between UserManagement and BookManagement
+class Middleware
+{
+private:
+    BookManagement *bookManagement;
+
+public:
+    Middleware(BookManagement *bookManagement) : bookManagement(bookManagement) {}
+
+    Book *findBookById(int id)
+    {
+        return bookManagement->findBookById(id);
+    }
+
+    void issueBook(User *user, int bookId)
+    {
+        bookManagement->issueBook(user, bookId);
+    }
+
+    void returnBook(User *user, int bookId)
+    {
+        bookManagement->returnBook(user, bookId);
+    }
+};
+
+// BookManagement class responsible for managing books in the library
+class BookManagement
+{
+private:
+    unordered_map<int, Book *> books;
+    NotificationSystem notificationSystem;
+
+public:
+    // Add a new book to the library
+    void addBook(int id, const string &title, const string &author, const string &genre)
+    {
+        if (books.find(id) == books.end())
+        {
+            Book *book = new Book(id, title, author, genre);
+            books[id] = book;
+            cout << "Book added successfully." << endl;
+        }
+        else
+        {
+            cout << "Book with the same ID already exists." << endl;
+        }
+    }
+
+    // Remove a book from the library
+    void removeBook(int id)
+    {
+        auto it = books.find(id);
+        if (it != books.end())
+        {
+            delete it->second;
+            books.erase(it);
+            cout << "Book removed successfully." << endl;
+        }
+        else
+        {
+            cout << "Book not found." << endl;
+        }
+    }
+
+    // Find a book by its ID
+    Book *findBookById(int id)
+    {
+        auto it = books.find(id);
+        return (it != books.end()) ? it->second : nullptr;
+    }
+    // search by author name
+    Book *findBookByAuthorName(const string &authorName)
+    {
+        for (const auto &pair : books)
+        {
+            if (pair.second->getAuthor() == authorName)
+            {
+                return pair.second;
+            }
+        }
+        return nullptr; // Book not found
+    }
+    // search by title name
+    Book *findBookByTitle(const string &title)
+    {
+        for (const auto &pair : books)
+        {
+            if (pair.second->getTitle() == title)
+            {
+                return pair.second;
+            }
+        }
+        return nullptr; // Book not found
+    }
+    // find book by genre
+    Book *findBookByGenre(const string &genre)
+    {
+        for (const auto &pair : books)
+        {
+            if (pair.second->getGenre() == genre)
+            {
+                return pair.second;
+            }
+        }
+        return nullptr; // Book not found
+    }
+
+    // Count the total number of books in the library
+    int countBooks() const
+    {
+        return books.size();
+    }
+
+    // Read the details of a book
+    void readBook(Book *book) const
+    {
+        if (book != nullptr)
+        {
+            cout << "Book ID: " << book->getId() << endl;
+            cout << "Title: " << book->getTitle() << endl;
+            cout << "Author: " << book->getAuthor() << endl;
+            cout << "Genre: " << book->getGenre() << endl;
+            cout << "Publication Date: " << book->getPublicationDate();
+            cout << "Availability: " << (book->isAvailable() ? "Available" : "Not Available") << endl;
+        }
+        else
+        {
+            cout << "Book not found." << endl;
+        }
+    }
+
+    // Issue a book to a user
+    void issueBook(User *user, int bookId)
+    {
+        Book *book = findBookById(bookId);
+        if (book != nullptr && book->isAvailable())
+        {
+            // Issue the book
+            book->setAvailability(false);
+            user->incrementTotalBooksIssued();
+            // Send notification to user
+            string message = "Book '" + book->getTitle() + "' has been issued to you.";
+            notificationSystem.sendNotification(user->getEmail(), message);
+        }
+        else
+        {
+            cout << "Book not available for issue." << endl;
+        }
+    }
+
+    // Return a book issued by a user
+    void returnBook(User *user, int bookId)
+    {
+        Book *book = findBookById(bookId);
+        if (book != nullptr && !book->isAvailable())
+        {
+            // Return the book
+            book->setAvailability(true);
+            user->decrementTotalBooksIssued();
+            // Send notification to user
+            string message = "Book '" + book->getTitle() + "' has been returned successfully.";
+            notificationSystem.sendNotification(user->getEmail(), message);
+        }
+        else
+        {
+            cout << "Book not issued or already returned." << endl;
+        }
+    }
+
+    // Destructor to clean up dynamically allocated memory
+    ~BookManagement()
+    {
+        for (auto &pair : books)
+        {
+            delete pair.second;
+        }
+        books.clear();
+    }
+};
+
+// User class representing a library user
+class User
+{
+private:
+    int id;
+    string name;
+    string email;
+    int totalBooksIssued;
+
+public:
+// constructor for initilisation
+    User(int id, const string &name, const string &email)
+        : id(id), name(name), email(email), totalBooksIssued(0) {}
+    // getters funtion
+    int getId() const { return id; }
+    string &getName() { return name; }
+    string &getEmail() { return email; }
+    // handling the number of issued book
+    int getTotalBooksIssued() { return totalBooksIssued; }
+    void incrementTotalBooksIssued() { totalBooksIssued++; }
+    void decrementTotalBooksIssued() { totalBooksIssued--; }
+};
+
+// UserManagement class responsible for managing library users
+class UserManagement
+{
+private:
+    unordered_map<int, User *> users;
+    Middleware *middleware;
+    unordered_map<int, vector<int>> issuedBooks;
+    // int is for the id and vector is because  since user can issue multiple book that why
+
+public:
+    UserManagement(Middleware *middleware) : middleware(middleware) {}
+
+    // Add a new user to the system
+    void addUser(int id, const string &name, const string &email)
+    {
+        // insure that same user should not be added
+        if (users.find(id) == users.end())
+        {
+            User *user = new User(id, name, email);
+            users[id] = user;
+            cout << "User added successfully." << endl;
+        }
+        else
+        {
+            cout << "User with the same ID already exists." << endl;
+        }
+    }
+
+    // Remove a user from the system
+    void removeUser(int id)
+    {
+        auto it = users.find(id);
+        if (it != users.end())
+        {
+            delete it->second;
+            users.erase(it);
+            cout << "User removed successfully." << endl;
+        }
+        else
+        {
+            cout << "User not found." << endl;
+        }
+    }
+
+    // Find a user by their ID
+    User *findUserById(int id)
+    {
+        auto it = users.find(id);
+        return (it != users.end()) ? it->second : nullptr;
+    }
+    // Issue a book to a user
+    void issueBook(User *user, int bookId)
+    {
+        // before issueing the book we justt check if user has not crossed it book issue limit
+        if (user && issuedBooks[user->getId()].size() < 5)
+        {
+            issuedBooks[user->getId()].push_back(bookId);
+            cout << "Book with ID " << bookId << " issued to user " << user->getName() << endl;
+        }
+        else
+        {
+            cout << "User cannot issue more books or user does not exist." << endl;
+        }
+    }
+    // returning book
+    void returnBook(User *user, int bookId)
+    {
+        if (user && issuedBooks.find(user->getId()) != issuedBooks.end())
+        {
+            auto userBooks = issuedBooks[user->getId()];
+            bool found = false;
+            for (auto userInList = userBooks.begin(); userInList != userBooks.end(); ++userInList)
+            {
+                // since if book found then we need to return it i.erase it
+                if (*userInList == bookId)
+                {
+                    userBooks.erase(userInList);
+                    cout << "Book with ID " << bookId << " returned by user " << user->getName() << endl;
+                    found = true;
+                    break; // Exit the loop once the book is found and returned
+                }
+            }
+            // if not found then it is sure that user has not issued that boook
+            if (!found)
+            {
+                cout << "User has not issued book with ID " << bookId << endl;
+            }
+        }
+        else
+        {
+            cout << "User does not exist or has not issued any books." << endl;
+        }
+    }
+    // Destructor to clean up dynamically allocated memory
+    ~UserManagement()
+    {
+        for (auto pair : users)
+        {
+            delete pair.second;
+        }
+        users.clear();
+    }
+};
+
+// LibraryManagementSystem class acting as a facade to simplify interactions
+class LibraryManagementSystem
+{
+private:
+    BookManagement bookManagement;
+    Middleware middleware;
+    UserManagement userManagement;
+
+public:
+    LibraryManagementSystem() : middleware(&bookManagement), userManagement(&middleware) {}
+
+    // Add a new book to the library
+    void addBook(int id, const string &title, const string &author, const string &genre)
+    {
+        bookManagement.addBook(id, title, author, genre);
+    }
+
+    // Remove a book from the library
+    void removeBook(int id)
+    {
+        bookManagement.removeBook(id);
+    }
+
+    // Find a book by its ID
+    Book *findBookById(int id)
+    {
+        return bookManagement.findBookById(id);
+    }
+
+    // Count the total number of books in the library
+    int countBooks() const
+    {
+        return bookManagement.countBooks();
+    }
+
+    // Read the details of a book
+    void readBook(Book *book) const
+    {
+        bookManagement.readBook(book);
+    }
+
+    // Add a new user to the system
+    void addUser(int id, const string &name, const string &email)
+    {
+        userManagement.addUser(id, name, email);
+    }
+
+    // Remove a user from the system
+    void removeUser(int id)
+    {
+        userManagement.removeUser(id);
+    }
+
+    // Find a user by their ID
+    User *findUserById(int id)
+    {
+        return userManagement.findUserById(id);
+    }
+
+    // Issue a book to a user
+    void issueBook(User *user, int bookId)
+    {
+        userManagement.issueBook(user, bookId);
+    }
+
+    // Return a book issued by a user
+    void returnBook(User *user, int bookId)
+    {
+        userManagement.returnBook(user, bookId);
+    }
+};
+
+int main()
+{
+
+    return 0;
+}
