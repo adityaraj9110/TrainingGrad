@@ -9,8 +9,8 @@ enum class PaymentType
     CREDIT_CARD,
 };
 
-// Enum for ParkingSpaceType
-enum class ParkingSpaceType
+// Enum for ParkingLotType
+enum class ParkingLotType
 {
     BIKE_PARKING,
     CAR_PARKING,
@@ -27,7 +27,7 @@ enum class VehicleType
     WHEELCHAIR
 };
 
-// Enum for ParkingTicketStatus
+// Enum for TicketStatus
 enum class ParkingTicketStatus
 {
     PAID,
@@ -45,8 +45,6 @@ enum class PaymentStatus
 // Forward declaration to avoid any errors
 class ParkingLot;
 class Account;
-// class ParkingLot;
-// class Account;
 class ParkingTicket;
 class PaymentMode;
 class Account
@@ -69,7 +67,7 @@ public:
 class PaymentInfo
 {
 public:
-    double amount;
+    int amount;
     time_t paymentDate;
     int transactionId;
     ParkingTicket *parkingTicket;
@@ -106,18 +104,18 @@ class ParkingTicket
 {
 public:
     int ticketId;
-    int levelId;
+    int floorId;
     int spaceId;
     // these two are the time_t type variable used to store the time in second
     time_t vehicleEntryDateTime;
     time_t vehicleExitDateTime;
-    ParkingSpaceType parkingSpaceType;
+    ParkingLotType ParkingLotType;
     double totalCost;
     ParkingTicketStatus parkingTicketStatus;
     // these are the funtion which is used to update the total cost and exit time of vehicle
     void updateTotalCost()
     {
-        // we convert the seconds in hours by diving 3600 and perhour price is 4 so multiply with 4 
+        // we convert the seconds in hours by diving 3600 and perhour price is 4 so multiply with 4
         totalCost = (difftime(vehicleExitDateTime, vehicleEntryDateTime) / 3600) * 4;
     };
     void updateVehicleExitTime(time_t vehicleExitDateTime)
@@ -151,27 +149,27 @@ private:
 };
 
 // Class ParkingDisplayBoard
-class ParkingDisplayBoard
+class DisplayBoard
 {
 public:
-    unordered_map<ParkingSpaceType, int> freeSpotsAvailableMap;
+    unordered_map<ParkingLotType, int> freeSpots;
 
-    void updateFreeSpotsAvailable(ParkingSpaceType parkingSpaceType, int spaces)
+    void updateFreeSpotsAvailable(ParkingLotType ParkingLotType, int spaces)
     {
         // if free spots available store it in map with its type
-        freeSpotsAvailableMap[parkingSpaceType] += spaces;
+        freeSpots[ParkingLotType] += spaces;
     };
 };
 
-// Class ParkingSpace
-class ParkingSpace
+// Class ParkingLot
+class ParkingLot
 {
 public:
     int spaceId;
     bool isFree;
-    double costPerHour;
+    int rate;
     Vehicle *vehicle;
-    ParkingSpaceType parkingSpaceType;
+    ParkingLotType parkingLotType;
 };
 
 // Class Gate
@@ -226,9 +224,9 @@ public:
 class ParkingFloor
 {
 public:
-    int levelId;
-    vector<ParkingSpace *> parkingSpaces;
-    ParkingDisplayBoard parkingDisplayBoard;
+    int floorId;
+    vector<ParkingLot *> ParkingLots;
+    DisplayBoard displayBoard;
 };
 
 // Class ParkingAttendant
@@ -262,23 +260,23 @@ public:
         return false;
     }
 
-    bool addParkingSpace(ParkingFloor *floor, ParkingSpace *parkingSpace)
+    bool addParkingLot(ParkingFloor *floor, ParkingLot *ParkingLot)
     {
         // adding a parking space to a parking floor
-        if (floor != nullptr && parkingSpace != nullptr)
+        if (floor != nullptr && ParkingLot != nullptr)
         {
-            floor->parkingSpaces.push_back(parkingSpace);
+            floor->ParkingLots.push_back(ParkingLot);
             return true;
         }
         return false;
     }
 
-    bool addParkingDisplayBoard(ParkingFloor *floor, ParkingDisplayBoard *parkingDisplayBoard)
+    bool addParkingDisplayBoard(ParkingFloor *floor, DisplayBoard *displayBoard)
     {
         // adding a parking display board to a parking floor
-        if (floor != nullptr && parkingDisplayBoard != nullptr)
+        if (floor != nullptr && displayBoard != nullptr)
         {
-            floor->parkingDisplayBoard = *parkingDisplayBoard;
+            floor->DisplayBoard = *displayBoard;
             return true;
         }
         return false;
@@ -297,13 +295,13 @@ public:
     Address address;
     string parkingLotName;
 
-    bool isParkingSpaceAvailableForVehicle(Vehicle *vehicle)
+    bool isParkingLotAvailableForVehicle(Vehicle *vehicle)
     {
         for (auto floor : parkingFloors)
         {
-            for (auto parkingSpace : floor->parkingSpaces)
+            for (auto ParkingLot : floor->ParkingLots)
             {
-                if (parkingSpace->isFree)
+                if (ParkingLot->isFree)
                 {
                     return true; // Parking space available
                 }
