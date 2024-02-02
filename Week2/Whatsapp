@@ -379,6 +379,16 @@ public:
     }
 };
 
+// classs for main whatsapp
+class Whatsapp{
+    public:
+        // since whatsapp has all main class
+        UserManagement* userManagement;
+        MessageManagement* messageContent;
+        StatusManagement* statusManagement;
+
+
+};
 int main()
 {
     
