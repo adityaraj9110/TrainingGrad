@@ -1,0 +1,386 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+/**********************  This whole design constitue A whatsApp system which is main class and it has all the management system like message,user and status .Further we need to have two middleware in the whatsapp class so that we can establish bridge between user management and message management and also user mangement and status management  *********************** */
+
+// class for person
+class Person
+{
+protected:
+    int id;
+    string name;
+    int mobileNumber;
+    string email;
+    bool seenStatus;
+};
+
+// for interface seggregation
+class Contact : public Person
+{
+    int genrateUniqueIdForContact()
+    {
+        static int id;
+        return id++;
+    }
+
+public:
+    Contact(string name, int mobileNumber, int id)
+    {
+        this->name = name;
+        this->mobileNumber = mobileNumber;
+        this->id = genrateUniqueIdForContact();
+    }
+    // getter funtion
+    string getName() { return name; }
+    int getMobileNNumber() { return mobileNumber; }
+    bool hasContactCheckedStatus()
+    {
+        return seenStatus;
+    }
+    bool getSatusInformation()
+    {
+        return seenStatus;
+    }
+
+    // setter funtion
+    void setStatusToSeen()
+    {
+        seenStatus = true;
+    }
+};
+
+// user class
+class User : public Person
+{
+    unordered_map<int, Contact *> contacts;
+    // this is here to genrate unique id
+    int genrateUniqueId()
+    {
+        static int id;
+        return id++;
+    }
+    vector<Status*>statuses;
+public:
+    // constructor
+    User(string name, int mobileNumber, string email)
+    {
+        this->name = name;
+        this->mobileNumber = mobileNumber;
+        this->email = email;
+        this->id = genrateUniqueId();
+    }
+    // getter funtion for data retrival
+    string getNameOfUser() { return name; }
+    string getEmail() { return email; }
+    int getMobileNumber() { return mobileNumber; }
+    int getUserId() { return id; }
+
+    // setter funtions
+    void setName(string name) { this->name = name; }
+    void setEmail(string email) { this->email = email; }
+    void setMobileNumber(int mobileNumber) { this->mobileNumber = mobileNumber; }
+
+    // funtion to add Contact
+    void addContact(string name, int contactNumber)
+    {
+        Contact *contact = new Contact(name, contactNumber);
+        cout << "Contact Added";
+    }
+    void setStatus(Status* status){
+        statuses.push_back(status);
+    }
+};
+
+// USERMANAGEMENT
+class UserManagement
+{
+    vector<User *> users;
+
+public:
+    // add user
+    void addUser(User *user)
+    {
+        users.push_back(user);
+    }
+
+    // show all user
+    void showAllUser()
+    {
+        for (auto user : users)
+        {
+            cout << user->getNameOfUser() << " " << user->getEmail() << " " << user->getMobileNumber();
+        }
+    }
+
+    // deleteParticularUser
+    void deleteParticularUser(User *user)
+    {
+        if (user != nullptr)
+        {
+            user = nullptr;
+            auto userPositionInList = find(users.begin(), users.end(), user);
+            // this will delete the given user from the list
+            users.erase(userPositionInList, userPositionInList + 1);
+        }
+        else
+        {
+            cout << "User does not exist";
+        }
+    }
+    // edit user
+    void editUser(User *user, string name = "", int mobileNumber = 0, string email = "")
+    {
+        if (name.size() > 0)
+        {
+            user->setName(name);
+        }
+        if (mobileNumber != 0)
+        {
+            user->setMobileNumber(mobileNumber);
+        }
+        if (email.size() > 0)
+        {
+            user->setEmail(email);
+        }
+    }
+    //
+};
+
+// message
+
+// Abstract base class for Message content
+// Abstract base class for Message content
+class MessageContent {
+public:
+    virtual string getContent() const = 0;
+};
+
+// Concrete class for Audio content
+class Audio : public MessageContent {
+    string contentOfAudio;
+
+public:
+    Audio(string content) : contentOfAudio(content) {}
+    string getContent() const override {
+        return contentOfAudio;
+    }
+};
+
+// Concrete class for Video content
+class Video : public MessageContent {
+    string contentOfVideo;
+
+public:
+    Video(string content) : contentOfVideo(content) {}
+    string getContent() const override {
+        return contentOfVideo;
+    }
+};
+
+// Concrete class for Text content
+class Text : public MessageContent {
+    string contentOfText;
+
+public:
+    Text(string content) : contentOfText(content) {}
+    string getContent() const override {
+        return contentOfText;
+    }
+};
+
+// Message class using Factory Design Pattern
+class Message {
+    int receiverId;
+    int senderId;
+    MessageContent *content;
+
+public:
+    Message(MessageContent *content, int receiverId, int senderId)
+        : content(content), receiverId(receiverId), senderId(senderId) {}
+
+    int getReceiverId() const {
+        return receiverId;
+    }
+
+    int getSenderId() const {
+        return senderId;
+    }
+
+    string getContent() const {
+        return content->getContent();
+    }
+};
+
+// Factory class to create MessageContent objects
+class MessageContentFactory {
+public:
+    MessageContent *createContent(string type, string content) {
+        // checking the type
+        if (type == "Audio") {
+            return new Audio(content);
+        }
+        else if (type == "Video") {
+            return new Video(content);
+        }
+        else if (type == "Text") {
+            return new Text(content);
+        }
+        else {
+            throw runtime_error("Invalid message content type.");
+        }
+    }
+};
+
+// message management
+class MessageManagement {
+    vector<Message *> messages;
+
+public:
+    // to add message
+    void addMessage(Message *message) {
+        messages.push_back(message);
+    }
+
+    // to read message
+    void readMessage(Message *message) {
+        cout << message->getContent();
+    }
+
+    // to delete message
+    void deleteMessage(Message *message) {
+        if (message != nullptr) {
+            auto messageInTheList = find(messages.begin(), messages.end(), message);
+            if (messageInTheList != messages.end()) {
+                delete *messageInTheList; // Free memory of the message
+                messages.erase(messageInTheList);
+                cout << "Message Deleted Successfully";
+            }
+            else {
+                cout << "Message is not found in the list";
+            }
+        }
+        else {
+            cout << "Invalid message";
+        }
+    }
+
+    
+};
+
+// User class (assuming it's defined somewhere)
+class User {
+public:
+    int getUserId() const {
+        // Implement this method to get the user ID
+        return 0;
+    }
+};
+
+// MiddlewareForUserAndMessage class
+class MiddlewareForUserAndMessage {
+    User user;
+
+public:
+    // Function to send message with different content types
+    void chatWithOther(User* sender, User* receiver, string messageToSend, string contentType) {
+        MessageContentFactory* messageContentFactory;
+        MessageContent* content = messageContentFactory->createContent(contentType, messageToSend);
+        Message* message = new Message(content, receiver->getUserId(), sender->getUserId());
+        
+    }
+};
+
+class Status
+{
+    string statusContent;
+    int statusId;
+    string typeeOfStatus;
+    int genrateUniquesIdForStatus()
+    {
+        static int id;
+        return id++;
+    }
+
+public:
+    Status(string statusContent)
+    {
+        this->statusContent = statusContent;
+        this->statusId = genrateUniquesIdForStatus();
+    }
+};
+// middleware for status
+
+class MiddlewareForUserAndStatus
+{
+    User user;
+    Status *status;
+
+public:
+    // Function to set user status
+    void setUserStatus(User *user, string statusContent)
+    {
+        status = new Status(statusContent);
+        user->setStatus(status);
+    }
+
+    // Function to get user status
+    string getUserStatus(User *user)
+    {
+        // Return user's status
+        return ""; // Placeholder
+    }
+};
+// this is for status
+class Status
+{
+    string statusContent;
+    int statusId;
+    string typeOfStatus;
+    // way to genrerate id
+    int generateUniqueIdForStatus()
+    {
+        static int id;
+        return id++;
+    }
+
+public:
+    // constructor
+    Status(string statusContent)
+    {
+        this->statusContent = statusContent;
+        this->statusId = generateUniqueIdForStatus();
+    }
+};
+class StatusManagement
+{
+    vector<Status *> statuses;
+
+public:
+    // Add status
+    void addStatus(Status *status)
+    {
+        statuses.push_back(status);
+    }
+
+    // Delete status
+    void deleteStatus(Status *status)
+    {
+        if (status != nullptr)
+        {
+            status = nullptr;
+            auto statusInTheList = find(statuses.begin(), statuses.end(), status);
+            statuses.erase(statusInTheList, statusInTheList + 1);
+            cout << "Status Deleted Successfully";
+        }
+        else
+        {
+            cout << "Status is already deleted";
+        }
+    }
+};
+
+int main()
+{
+    
+    return 0;
+}
