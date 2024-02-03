@@ -1,0 +1,654 @@
+#include<bits/stdc++.h>
+using namespace std;
+
+// all the forward declaration 
+// this is the LLD for the hotelManagement 
+// the design flow
+// there is main class which is hotelManagmentsystem which has usermanagement,adminmanagement,hotel and hotelagent management
+// there is a middle which is there to build a communication channel through  which everymanagement can communicate which each other
+// by doing this we increase the code readability and the code redundancy is also reduced 
+// proper naming of class is there and some classes also has some complex object like hotel classs has location object etc
+
+
+class Room;
+class Hotel;
+class HotelManagement;
+class User;
+class UserManagement;
+class HotelAgent;
+class HotelAgentManagement;
+class Admin;
+class AdminManagement;
+class MiddleWare;
+class Person{
+    protected:
+        string userName;
+        string password;
+    public:
+        // for initialisation
+        Person(string userName,string password){
+            this->userName = userName;
+            this->password =  password;
+        }
+        // getters funtions
+        string name(){
+            return userName;
+        }
+        string getPaaword(){
+            return password;
+        }
+        // setters
+        void setUserName(string userName){
+            this->userName = userName;
+        }
+        void setPassword(string password){
+            this->password = password;
+        }
+};
+
+// this is class for normal user
+class User:public Person{
+    int userId;
+    // this is for  the unique genration of id for user
+    int generateId(){
+        static int id;
+        return id++;
+    }
+    public:
+        User(string userName,string password) :Person(userName,password),userId(generateId()) {}
+};
+
+// this is the class for HotelAgent
+class HotelAgent:public Person{
+    int agentId;
+    // this is for unique generation for the hotel agent id
+    // it has to be built in different class since we have used here static int so that why we need to implement this in different class
+    int generateId(){
+        static int id;
+        return id++;
+    }
+    public:
+        // contructor for initialization
+        HotelAgent(string userName,string password) : Person(userName,password),agentId(generateId()){}
+
+        // getter for the id
+        int getAgentId(){
+            return agentId;
+        }
+};
+
+// class For admin
+class Admin:public Person{
+    int adminId;
+    // to genrate the id
+    int generateId(){
+        static int id;
+        return id++;
+    }
+    public:
+        Admin(string userName,string password): Person(userName,password),adminId(generateId()) {}
+
+};
+
+// THIS IS LOCATION CLASS
+class Location{
+    int pinNumber;
+    string area;
+    string city;
+    string country;
+    public:
+        Location(int pinNumber,string area,string city,string country){
+            this->pinNumber = pinNumber;
+            this->area = area;
+            this->city = city;
+            this->country = country;
+        }
+        // getters
+        int getPinNumber(){
+            return pinNumber;
+        }
+        string getArea(){
+            return area;
+        }
+        string getCity(){
+            return city;
+        }
+        string getCountry(){
+            return country;
+        }
+};
+// this is for the room status
+enum RoomStatus{
+    AVAILABLE,RESERVED,BOOKED
+};
+// this  is for rating
+enum HotelRating{
+    BAD,GOOD,BEST
+};
+
+// class for hotel
+
+class Hotel{
+    string hotelName;
+    int hotelId;
+    // this is complex object
+    Location* locationOfHotel;
+    // since hotel has various rooms
+    vector<Room*>rooms;
+    // here we keep those user who are register for the particular hotel
+    vector<int>registeredUsers;
+    // here first int is for user id and second is the enum of status
+    unordered_map<int,HotelRating>ratingByUser;
+    // this is for reservation of room by user
+    // first int represent id of user and second is representing room id which user reserveed the room
+    unordered_map<int,int>reservationInformation;
+
+    
+    public:
+        // hotel constructor
+        Hotel(string hotelName,int hotelId,Location* locationOfHotel){
+            this->hotelName = hotelName;
+            this->hotelId = hotelId;
+            this->locationOfHotel = locationOfHotel;
+        }
+        // getters funtions
+        vector<Room*> getRooms(){
+            return rooms;
+        }
+
+        int getHotelId(){
+            return hotelId;
+        }
+
+        string getHotelName(){
+            return hotelName;
+        }
+        vector<int> getRegisteredUser(){
+            return registeredUsers;
+        }
+        Location* getLocation(){
+            return locationOfHotel;
+        }
+        unordered_map<int,HotelRating> getRating(){
+            return ratingByUser;
+        }
+        unordered_map<int,int> getReservationInformation(){
+            return reservationInformation;
+        }
+        // setter are there if in case of editing the details of hotels
+
+        void setName(string hotelName){
+            this->hotelName = hotelName;
+        }
+        void setLocation(Location* locationOfHotel){
+            this->locationOfHotel = locationOfHotel;
+        }
+        void setRegisteredUser(int idOfUser){
+            registeredUsers.push_back(idOfUser);
+        }
+        void setRating(int userId,HotelRating ratingOfHotelGivenByUser){
+            ratingByUser[userId] = ratingOfHotelGivenByUser;
+        }
+        void setReservationStatus(int userId,int roomId){
+            reservationInformation[userId] = roomId;
+        }
+
+        // for displaying information about the room status
+
+        void displayInformtionAboutRoom(){
+            int countOfBookRoom;
+            int countOfAvailableRoom;
+            int countOfReservedRoom;
+
+            for(auto room:rooms){
+                RoomStatus currentStatusOfRoom = room->getRoomStatus();
+                if(currentStatusOfRoom==BOOKED) countOfBookRoom++;
+                else if(currentStatusOfRoom==AVAILABLE) countOfAvailableRoom++;
+                else if(currentStatusOfRoom==RESERVED) countOfReservedRoom++;
+            }
+
+            cout<<"In this hotels there are "<<countOfAvailableRoom<<"available "<<countOfBookRoom<<"rooms are already booked "<<"and "<<countOfReservedRoom<<"rooms are reserved";
+        }
+        
+
+};
+
+// class room
+class Room{
+    int roomId;
+    string roomNumber;
+    int priceOfRoom;
+    // room status is enum
+    RoomStatus statusOfRoom;
+    int genrateRoomId(){
+        static int id;
+        return id++;
+    }
+    public:
+        // constructor for object initialisation
+        Room(string roomNumber,int priceOfRoom){
+            this->roomNumber = roomNumber;
+            this->priceOfRoom = priceOfRoom;
+            this->statusOfRoom = AVAILABLE; // by default when room is created then room is avialable
+            this->roomId = genrateRoomId();
+        }
+        // getters
+        int getRoomId(){
+            return roomId;
+        }
+        // string roomNumber
+        string getRoomNumber(){
+            return roomNumber;
+        }
+        // int getPrice
+        int price(){
+            return priceOfRoom;
+        }
+        // get Status
+        RoomStatus getRoomStatus(){
+            if(RoomStatus::AVAILABLE){
+                return AVAILABLE;
+            }
+            else if(RoomStatus::BOOKED){
+                return BOOKED;
+            }else{
+                return RESERVED;
+            }
+        }
+        
+
+        // setter funtion
+        void setRoomStatus(RoomStatus roomstatus){
+            this->statusOfRoom = roomstatus;
+        }
+    
+};
+
+
+
+// since we have define all the nesscary classes not its time to build their management classes
+// this  is for admin management class
+class AdminManagement{
+    
+    // since admin want to add rooms and all crud operation hotel but hotel is different entity and adminmaneger and hotel manger are independent entity
+    // so in this case we need a communication channel between both so that they can communicate and admin perform task on hotel
+    // also we dont want to give admin direct hotel management access since it is not the right way and also it leads to code redundancy
+    MiddleWare* middleWare;
+
+    // add room to hotel
+    void addRoom(int hotelId,Room* room){
+        middleWare->hotelManagement->addRoomInHotel(hotelId,room);
+    }
+
+    // changeHotelRoom
+    void changeNameOfHotel(int hotelId,string name){
+        middleWare->hotelManagement->changeHotelName(hotelId,name);
+    }
+    
+    // changeHotelLocation
+    void changeLocationOfHotel(int hotelId,Location* location){
+        middleWare->hotelManagement->changeLocation(hotelId,location);
+    }
+
+    // ḍelete the hotel
+    void deleteTheHotel(int hotelId){
+        middleWare->hotelManagement->deleteHotel(hotelId);
+    }
+
+    // add hotel
+    void addMoreHotels(Hotel* hotel){
+        middleWare->hotelManagement->addHotel(hotel);
+    }
+};
+
+// this is the middle for the communication
+class MiddleWare{
+    public:
+    HotelManagement* hotelManagement;
+    // hotelmanement will have all the hotels that are there in database so
+    vector<Hotel*>hotels;
+    // this database contain information in this form
+    // hotelId->userId1->roomid
+    // mutiple user can have same room 
+    unordered_map<int,pair<vector<int>,int>>mappingOfBookedHotel;
+    vector<Room*>room;
+    public:
+    // add rooms in hotel
+    void addRoomInHotel(int hotelId,Room* room){
+        bool findRoom = false;
+        for(auto hotelInList:hotels){
+            if(hotelInList->getHotelId()==hotelId){
+                findRoom = true;
+                vector<Room*>listOfRoom = hotelInList->getRooms();
+                listOfRoom.push_back(room);
+                break;
+            }
+        }
+        if(!findRoom) cout<<"Sorry the hotel with given id is not exist"<<"\n";
+    }
+        // this is when we need to change the hotelName
+    void changeHotelName(int hotelId,string name){
+        bool nameChanged = false;
+        for(auto hotelInList:hotels){
+            if(hotelInList->getHotelId()==hotelId){
+                // setting up new name
+                nameChanged = true;
+                hotelInList->setName(name);
+                break;
+            }
+        }
+        if(!nameChanged){
+            cout<<"Sorry the provided hotel id doest not exist";
+        }
+    }
+
+    // this is when we need to change the current location
+    void  changeLocation(int hotelId,Location* location){
+        bool locationChanged = false;
+        for(auto hotelInList:hotels){
+            if(hotelInList->getHotelId()==hotelId){
+                // setting up the new location
+                locationChanged = true;
+                hotelInList->setLocation(location);
+                break;
+            }
+        }
+        if(!locationChanged){
+            cout<<"Sorry the provided hotel id doest not exist";
+        }
+    }
+    // delete hotel
+    void deleteHotel(int hotelId){
+        bool deleted = false;
+        for(auto hotelInList:hotels){
+            if(hotelInList->getHotelId()==hotelId){
+                deleted = true;
+                // find and delete that specific hotel
+                auto positionOfHotel = find(hotels.begin(),hotels.end(),hotelInList);
+                hotelInList = nullptr;
+                hotels.erase(hotels.begin(),positionOfHotel+1);
+                break;
+            }
+        }
+        if(!deleted) cout<<"Sorry the provided hotel id doest not exist";
+    }
+    // add hotel in database
+    void addHotel(Hotel* hotel){
+        if(hotel!=nullptr){
+            hotels.push_back(hotel);
+        }
+    }
+
+    // register the user
+    void userRegistration(int hotelId,int userId){
+        bool deleted = false;
+        for(auto hotelInList:hotels){
+            if(hotelInList->getHotelId()==hotelId){
+                vector<int>registerUserListWithThisParticularHotel = hotelInList->getRegisteredUser();
+                registerUserListWithThisParticularHotel.push_back(userId);
+                break;
+            }
+        }
+        if(!deleted) cout<<"Sorry the provided hotel id doest not exist";
+    }
+
+    // book hotelRoom
+    void bookHotelRoom(int hotelId,int userId,int roomId){
+            vector<Room*>listOfRoomsInGivenHotelId;
+            for(auto hotel:hotels){
+                if(hotel->getHotelId()==hotelId){
+                    listOfRoomsInGivenHotelId = hotel->getRooms();
+                    break;
+                }
+            }
+            // checking if that hotel has room
+            if(listOfRoomsInGivenHotelId.size()!=0){
+                for(auto room:listOfRoomsInGivenHotelId){
+                    // book hotel only if it is avialable
+                    if(room->getRoomId()==roomId && room->getRoomStatus()==AVAILABLE){
+                            mappingOfBookedHotel[hotelId].first.push_back(userId);
+                            mappingOfBookedHotel[hotelId].second = roomId; 
+                            room->setRoomStatus(BOOKED); // setting up the status of room to booked
+                            cout<<"dear user your room has been boooked succuessfully";
+                            break;
+                    }
+                }
+            }else{
+                cout<<"Oops we can'y find any rooom.(internal server error)";
+            }
+    }
+    // this function is responsible for the rating
+    void rateAHotel(int hotelId,int roomId,HotelRating ratingOfHotel){
+        for(auto hotel:hotels){
+            if(hotel->getHotelId()==hotelId){
+                // storing the rating of that particular hotel in database
+                hotel->setRating(roomId,ratingOfHotel);
+                cout<<"your rating has been appreciated we will try to improve and give you the best service";
+                break;
+            }
+        }
+    }
+    
+    // this funtion is responsible for the reservation of room by a user in a pariticular hotel
+    // we also need to keep in mind that a room can only be reserved by user if that rooom is accupied or not avialable
+    void reserverARoom(int hotelId,int userId,int roomId){
+        vector<Room*>allRoomsInthisHotel;
+        Hotel* hotelInWhichReservationHasToBeDone;
+        for(auto hotel:hotels){
+            if(hotel->getHotelId()==hotelId){
+                allRoomsInthisHotel = hotel->getRooms();
+                hotelInWhichReservationHasToBeDone = hotel;
+                break;
+            }
+        }
+        for(auto room:allRoomsInthisHotel){
+            // checking before reserving that the room is booked/unavialable and not reserved then only any user can reserve it
+            if(room->getRoomId()==roomId && (room->getRoomStatus()==BOOKED && room->getRoomStatus()!=RESERVED)){
+                hotelInWhichReservationHasToBeDone->setReservationStatus(userId,roomId);
+                room->setRoomStatus(RESERVED); // setting up the status of room as reserved
+                cout<<"Your desired hotel is reserved";
+                break;
+            }
+        }
+    }
+
+    // getter for hotels list
+    vector<Hotel*>getAllHotel(){
+        return hotels;
+    }
+
+};
+
+// this is for the management of hotel
+class HotelManagement{
+    // hotelmanement will have all the hotels that are there in database so
+    vector<Hotel*>hotels;
+    MiddleWare* middleWare;
+    // id of user and user of room
+    
+    public:
+    // add rooms in hotel
+    void addRoomInHotel(int hotelId,Room* room){
+        middleWare->addRoomInHotel(hotelId,room);
+    }
+        // this is when we need to change the hotelName
+    void changeHotelName(int hotelId,string name){
+        middleWare->changeHotelName(hotelId,name);
+    }
+
+    // this is when we need to change the current location
+    void  changeLocation(int hotelId,Location* location){
+        middleWare->changeLocation(hotelId,location);
+    }
+    // delete hotel
+    void deleteHotel(int hotelId){
+        middleWare->deleteHotel(hotelId);
+    }
+    // add hotel in database
+    void addHotel(Hotel* hotel){
+        middleWare->addHotel(hotel);
+    }
+    
+    
+    // getter for hotels list
+    vector<Hotel*> getAllHotels(){
+        middleWare->getAllHotel();
+    }
+
+        
+};
+
+// this is for user management class
+class UserManagement{
+    MiddleWare* middleWare;
+    vector<User*>users;
+    public:
+        void registerUser(int hotelId,int userId){
+            middleWare->userRegistration(hotelId,userId);
+            cout<<"user registered succuessfully";
+        }
+        // search by name
+        void searchByName(string name){
+            cout<<"search resuts: "<<"\n";
+            vector<Hotel*>hotelList = middleWare->getAllHotel();
+            for(auto hotel :hotelList){
+                if(hotel->getHotelName()==name){
+                    cout<<hotel->getHotelName();
+                }
+            }
+        }
+        // search by location
+        void searchByCity(string city){
+            vector<Hotel*>hotelList = middleWare->getAllHotel();
+            cout<<"search resuts: "<<"\n";
+            for(auto hotel :hotelList){
+                Location* locationOfCurrentHotel = hotel->getLocation();
+                if(locationOfCurrentHotel->getCity()==city){
+                    cout<<hotel->getHotelName();
+                }
+            }
+        }
+        // search by country
+        void searchByCountry(string country){
+            vector<Hotel*>hotelList = middleWare->getAllHotel();
+            cout<<"search resuts: "<<"\n";
+            for(auto hotel :hotelList){
+                Location* locationOfCurrentHotel = hotel->getLocation();
+                if(locationOfCurrentHotel->getCountry()==country){
+                    cout<<hotel->getHotelName();
+                }
+            }
+        }
+        // search by pinNumber
+        void searchByPinNumber(int pinNumber){
+            vector<Hotel*>hotelList = middleWare->getAllHotel();
+            cout<<"search resuts: "<<"\n";
+            for(auto hotel :hotelList){
+                Location* locationOfCurrentHotel = hotel->getLocation();
+                if(locationOfCurrentHotel->getPinNumber()==pinNumber){
+                    cout<<hotel->getHotelName();
+                }
+            }
+        }
+        // search by area
+        void searchByArea(string area){
+            vector<Hotel*>hotelList = middleWare->getAllHotel();
+            cout<<"search resuts: "<<"\n";
+            for(auto hotel :hotelList){
+                Location* locationOfCurrentHotel = hotel->getLocation();
+                if(locationOfCurrentHotel->getArea()==area){
+                    cout<<hotel->getHotelName();
+                }
+            }
+        }
+        // bboking of hotel room
+        void bookAHotel(int hotelId,int userId,int roomId){
+            middleWare->bookHotelRoom(hotelId,userId,roomId);
+        }
+        // register the user
+        void userRegistration(int hotelId,int userId){
+            middleWare->userRegistration(hotelId,userId);
+        }
+        // user can also rate a hotel
+        void rateAHotel(int hotelId,int userId,HotelRating ratingGivenByUser){
+            middleWare->rateAHotel(hotelId,userId,ratingGivenByUser);
+        }
+        // since user can modify the self details
+        // change in name
+        void changeNameOfUser(int userId,string name){
+            for(auto user:users){
+                user->setUserName(name);
+                cout<<"username changes successfully";
+                break;
+            }
+        }
+        // change in password
+        void changePasswordOfUser(int userId,string password){
+            for(auto user:users){
+                user->setPassword(password);
+                cout<<"Password changed successfully";
+                break;
+            }
+        }
+        
+
+};
+
+// this is the class for hotelAgent management
+class HotelAgentManagement{
+    vector<HotelAgent*>hotelAgents;
+    MiddleWare* middleWare;
+    public:
+        // registeration
+        void registerHotelAgent(HotelAgent* hotelAgent){
+            hotelAgents.push_back(hotelAgent);
+            cout<<"Your account has succusfully added in database";
+        }
+
+        // updateInformation
+        // updateName
+        void updateName(int agentId,string name){
+            for(auto agent:hotelAgents){
+                if(agent->getAgentId()==agentId){
+                    agent->setUserName(name);
+                    cout<<"Your username has been successfully changes!";
+                }
+            }
+        }
+        // updatePassword
+        void updatePassword(int agentId,string password){
+            for(auto agent:hotelAgents){
+                if(agent->getAgentId()==agentId){
+                    agent->setPassword(password);
+                    cout<<"Password has been changes successfully changes!";
+                }
+            }
+        }
+        // since agents can also changes details of hotel
+        // change the name of hotel
+        void changeNameOfHotel(int hotelId,string name){
+            middleWare->changeHotelName(hotelId,name);
+            cout<<"Name has been changed";
+        }
+        // change the location of hotel
+        void changeTheLocationOfHotel(int hotelId,Location* location){
+            middleWare->changeLocation(hotelId,location);
+            cout<<"Location has been changes!";
+        }
+
+};
+
+
+// now there is the main class of hotelManagementSysytem
+class HotelManagementSystem{
+    public:
+        // these are the classes through which hotelManagement can do all stuffs with the help of middleware
+        AdminManagement* adminManager;
+        HotelManagement* hotelManager;
+        UserManagement* userManager;
+        HotelAgent* hotelAgentManager;
+};
+int main(){
+    
+    return 0;
+}
